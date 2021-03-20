@@ -1,15 +1,25 @@
 import requests
 import time
+import re
+import urllib.robotparser
+import validators
 from bs4 import BeautifulSoup
+from selenium import webdriver
+import threading
 
 links = [
-        "https://community.shopify.com/",
-        "https://community.spotify.com/",
-        "https://community.acer.com/"
-        ]
+    "https://community.vtex.com"
+]
+
+threadLock = threading.Lock()
+global_counter = 0
+rp = urllib.robotparser.RobotFileParser()
 
 def get_robots_txt(url):
-    return requests.get(f"{url}robots.txt").text
+    return requests.get(f"{url}/robots.txt").text
+
+def get_robots_url(url):
+    return (f"{url}/robots.txt")
 
 def parse_robots_txt(html):
     lines = html.split('\n')
@@ -33,36 +43,69 @@ def parse_robots_txt(html):
                     informations["Allow"].append("".join(line_infos[1:]).split(" ")[0])
     return informations
 
-def require_sitemaps(sitemap, delay):
-    if delay > 0:
+def validate_link(link, base_link, rp):
+    if link != None and link:
+        if 'javascript:void(0);' in link or 'None' in link or not rp.can_fetch('*', link):
+            return False
+        else:
+            return True
+    else:
+        return False
+
+def get_site_content(link, delay):
+    global global_counter
+    if delay != None:
         time.sleep(delay)
-    sitemaps_dict = {}
+    driver = webdriver.Chrome()
+    driver.get(link)
+    time.sleep(2)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    with threadLock:
+        global_counter += 1
+    result = soup.findAll('a')
+    driver.close()
+    return result
 
-    request = requests.get(sitemap)
-    xml = request.text
+def links_bfs(base_link, rp):
+    global global_counter
+    delay = rp.crawl_delay("*")
+    a_tags = get_site_content(base_link, delay)
+    links = []
+    visited_links = []
+    visited_links.append(base_link)
+    for link in a_tags:
+        link = link.get('href')
+        if not 'http' in str(link):
+            link = base_link + str(link)
+        if validate_link(link, base_link, rp) and link not in visited_links:
+            links.append(link)
+    while links != [] and global_counter < 1000:
+        print(global_counter)
+        if validators.url(links[0]) and not links[0] in visited_links:
+            actual_links = get_site_content(links[0], delay)
+            visited_links.append(links[0])
+            links.pop(0)
+            for link in actual_links:
+                link = link.get('href')
+                if not 'http' in str(link):
+                    link = base_link + str(link)
+                if validate_link(link, base_link, rp) and link not in visited_links:
+                    links.append(link)
+        else: 
+            links.pop(0)
 
-    soup = BeautifulSoup(xml, "html.parser")
-    sitemap_tags = soup.find_all("sitemap")
-
-    while sitemap_tags != [] and not(sitemap_tags[0].findNext("loc").text in sitemaps_dict):
-        site = sitemap_tags[0].findNext("loc").text
-        sitemaps_dict[site] = sitemap_tags[0].findNext("lastmod").text
-        if delay > 0:
-            time.sleep(delay)
+    return visited_links
     
-        request = requests.get(site)
-        xml = request.text
-        soup = BeautifulSoup(xml, "html.parser")
-        sitemaps = soup.find_all("sitemap")
-        sitemap_tags.pop(0)
-        for element in sitemaps:
-            sitemap_tags.append(element)
-        
-    return sitemaps_dict
 
 def main():
     for link in links:
         robot_informations = parse_robots_txt(get_robots_txt(link))
-        sitemaps = require_sitemaps(robot_informations["Sitemap"], robot_informations["Crawl-delay"])
-
+        rp.set_url(get_robots_url(link))
+        rp.read()
+        #sitemaps = require_sitemaps(robot_informations["Sitemap"], robot_informations["Crawl-delay"])
+        # for sitemap in sitemaps:
+        #     get_sitemap_links(sitemap[0], link_counter)
+        link_counter = 0
+        site_links = links_bfs(link, rp)
+        print(site_links)
 main()
