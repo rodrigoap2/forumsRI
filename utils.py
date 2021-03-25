@@ -5,6 +5,11 @@ def get_parsed_phrase(soup):
     body = get_parsed_body(soup)
     return title + " " + max(body[1:], key=lambda s: len(s))
 
+def get_parsed_vtex(title, texts):
+    title = preprocess_phrase(title)
+    texts = [preprocess_phrase(t) for t in texts]
+    return title + " " + max(texts[1:], key=lambda s: len(s))
+
 def get_parsed_body(soup):
     return [preprocess_phrase(s) for s in soup.find('body').text.split('\n') if s.strip() != '']
 
