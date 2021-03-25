@@ -9,6 +9,8 @@ from selenium import webdriver
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from selenium.common.exceptions import TimeoutException
+import spacy
+from spacy_langdetect import LanguageDetector
 
 links = [
     "https://community.vtex.com",
@@ -22,6 +24,7 @@ global_counter = 0
 rp = urllib.robotparser.RobotFileParser()
 visited_links = []
 total_links = 100
+nlp = spacy.load('en')
 
 def get_robots_txt(url):
     return requests.get(f"{url}/robots.txt").text
@@ -42,7 +45,6 @@ def validate_link(link, base_link, heuristic):
     global rp
     valid_structure = verify_link_structure(link)
     if heuristic == True and valid_structure:
-        print(heuristic)
         heuristic_words = ['/topic/','/c/','/t/','/question/']
         for element in heuristic_words:
             if element in link:
@@ -53,7 +55,7 @@ def validate_link(link, base_link, heuristic):
         return valid_structure     
     
 def get_site_content(link, base_link, delay, heuristic):
-    global global_counter, visited_links
+    global global_counter, visited_links, nlp
     if delay != None:
         time.sleep(delay)
     options = webdriver.ChromeOptions()
@@ -67,20 +69,23 @@ def get_site_content(link, base_link, delay, heuristic):
         driver.get(link)
         time.sleep(5)
         soup = BeautifulSoup(driver.page_source, "html.parser")
-        with threadLock:
-            global_counter += 1
-            with open("links7.txt", "a") as myfile:
-                myfile.write(link + '\n')
-            print(global_counter)
         result = soup.findAll('a')
         driver.close()
         links = []
-        for link in result:
-            link = link.get('href')
-            if not 'http' in str(link):
-                link = base_link + str(link)
-            if validate_link(link, base_link, heuristic) and link not in visited_links and validators.url(link):
-                links.append(link)
+        for anchor in result:
+            link_page = anchor.get('href')
+            if not 'http' in str(link_page):
+                new_link = base_link + str(link_page)
+            else:
+                new_link = link_page
+            if validate_link(new_link, base_link, heuristic) and new_link not in visited_links and validators.url(new_link):
+                language = nlp(link_page)
+                detect_language = language._.language
+                if detect_language['language'] == 'pt' or '/topic/' in new_link:
+                    links.append(new_link)
+        with threadLock:
+            global_counter += 1
+            print(global_counter, link)
     except TimeoutException:
         print('timeout ', link)
     return links
@@ -93,7 +98,7 @@ def links_base(base_link, rp, heuristic):
     else:
         links = get_site_content(base_link, base_link, delay, True)
     visited_links.append(base_link)
-    while links != [] and global_counter < total_links:
+    while links != [] and global_counter <= total_links:
         print(global_counter)
         if heuristic == 'bfs':
             links_results = set_up_threads(links, base_link, delay, False)
@@ -129,14 +134,18 @@ def set_up_threads(links, base_link, delay, heuristic):
                             timeout = 30)
 
 def main():
-    global global_counter
+    global global_counter, visited_links
+    nlp.add_pipe(LanguageDetector(), name='language_detector', last=True)
     for link in links:
         rp.set_url(get_robots_url(link))
         rp.read()
         links_base(link, rp, 'heuristic')
         with threadLock:
             global_counter = 0
+            visited_links = []
         links_base(link, rp, 'bfs')
         with threadLock:
             global_counter = 0
+            visited_links = []
+
 main()
