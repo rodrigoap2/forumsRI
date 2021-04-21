@@ -106,6 +106,10 @@ def bm25(query_input: str, items_count: dict, inverted_index: dict, N: int):
 
     
 
+def kendal_tau(results_1, results_2):
+    pass
+
+
 if __name__ == "__main__":
    
 
