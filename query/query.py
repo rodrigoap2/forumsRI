@@ -70,13 +70,34 @@ def query_cosine(query_input: str, table_score: dict):
     
     return scores
     
+def ordered_pairs(result: list):
+    ans = []
 
-def kendal_tau(results_1, results_2):
-    pass
+    for i in range(len(result)):
+        for j in range(i + 1, len(result)):
+            ans.append([result[i], result[j]])
+
+    return ans
+
+def kendall_tau(results_1, results_2):
+    results_1 = list(results_1)
+    results_2 = list(results_2)
+    pairs_1 = ordered_pairs(results_1)
+    pairs_2 = ordered_pairs(results_2)
+
+    n = len(pairs_1)
+    delta = 0
+    for i in range(len(pairs_1)):
+        if pairs_1[i] not in pairs_2:
+            delta += 1
+    
+    delta *= 2
+    return 1 - 2 * delta / (2 * n)
+
 
 
 if __name__ == "__main__":
-    # TODO: kendal_tau, score com coseno
+    # TODO: score com coseno
 
     inverted_index = {}
     bw = {}
@@ -92,9 +113,16 @@ if __name__ == "__main__":
 
     arg = sys.argv[1]
     # 'Perdi minha situação do serviço, o que fazer???'
-    # q = query_cosine(arg, tfidf_table)
-    q = query_tf(arg, inverted_index)
+    q1 = query_cosine(arg, tfidf_table)
+    q2 = query_tf(arg, inverted_index)
 
-    print(q)
+    print(q1)
+    print(q2)
+
+
+    kt = kendall_tau(q1, q2)
+    print(kt)
+
+
 
 
