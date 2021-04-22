@@ -38,23 +38,44 @@ def query_tf(query_input: str, inverted_index: dict):
     return scores
     
 
-def cosine(query: str):
-    pass
+def cosine(query_terms: str, tfidf_terms, document_tfidf, N: int, inverted_index: dict):
+    idfs = []
+    for term in query_terms:
+        if term in inverted_index:
+            idfs.append(np.log2(N / inverted_index[term][0]))
+    
+    return sum(q * d for q in idfs for d in tfidf_terms) / np.linalg.norm(document_tfidf)
 
- # TODO: score com coseno
-def query_cosine(query_input: str, table_score: dict):
+
+def get_document_tfidf(doc, table_score):
+    ans = []
+
+    for term, scores in table_score.items():
+        if doc in scores:
+            ans.append(scores[doc])
+
+    return ans
+
+def query_cosine(query_input: str, table_score: dict, N: int, inverted_index: dict):
     query_input = preprocess_phrase(query_input)
     terms = query_input.split(' ')
+
 
     scores = {}
     for term in terms:
         if term in table_score:
             for doc, score in table_score[term].items():
                 if doc not in scores:
-                    scores[doc] = score
+                    scores[doc] = [score]
                 else:
-                    scores[doc] += score
+                    scores[doc].append(score)
     
+    
+    for doc, tfidf_terms in scores.items():
+        document_tfidf = get_document_tfidf(doc, table_score)
+        
+        scores[doc] = cosine(terms, tfidf_terms, document_tfidf, N, inverted_index)
+
     scores = {item[0]: item[1]
                             for item in sorted(scores.items(), key=lambda x: -x[1])}
     
@@ -93,15 +114,15 @@ if __name__ == "__main__":
 
     arg = sys.argv[1]
     # 'Perdi minha situação do serviço, o que fazer???'
-    q1 = query_cosine(arg, tfidf_table)
+    q1 = query_cosine(arg, tfidf_table, N, inverted_index)
     q2 = query_tf(arg, inverted_index)
 
     print(q1)
     print(q2)
 
-
     kt = kendall_tau(q1, q2)
     print(kt)
+    
 
 
 
