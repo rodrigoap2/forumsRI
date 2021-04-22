@@ -1,17 +1,8 @@
 import pickle
 import numpy as np
-from unidecode import unidecode
-import re
 import sys
+from query_utils import preprocess_phrase, qt_docs
 
-
-def qt_docs(inverted_index: dict):
-    documents = []
-    for term, v in inverted_index.items():
-        for i in v[1]:
-            documents.append(i[0])
-    
-    return len(set(documents))
 
 def tfidf(inverted_index: dict, N: int):
     tfidf_table = {}
@@ -26,8 +17,6 @@ def tfidf(inverted_index: dict, N: int):
 
     return tfidf_table
 
-def preprocess_phrase(phrase):
-    return re.sub('[^A-Za-z0-9 ]+', '', unidecode(phrase)).lower()
 
 def query_tf(query_input: str, inverted_index: dict):
     query_input = preprocess_phrase(query_input)
@@ -43,7 +32,7 @@ def query_tf(query_input: str, inverted_index: dict):
                 else:
                     scores[doc] += tf
 
-    scores = sorted_data = {item[0]: item[1]
+    scores = {item[0]: item[1]
                             for item in sorted(scores.items(), key=lambda x: -x[1])}
 
     return scores
@@ -52,6 +41,7 @@ def query_tf(query_input: str, inverted_index: dict):
 def cosine(query: str):
     pass
 
+ # TODO: score com coseno
 def query_cosine(query_input: str, table_score: dict):
     query_input = preprocess_phrase(query_input)
     terms = query_input.split(' ')
@@ -65,7 +55,7 @@ def query_cosine(query_input: str, table_score: dict):
                 else:
                     scores[doc] += score
     
-    scores = sorted_data = {item[0]: item[1]
+    scores = {item[0]: item[1]
                             for item in sorted(scores.items(), key=lambda x: -x[1])}
     
     return scores
@@ -94,10 +84,22 @@ def kendall_tau(results_1, results_2):
     delta *= 2
     return 1 - 2 * delta / (2 * n)
 
+# R e r são 0 na formula
+def bm25(query_input: str):
+    query_input = preprocess_phrase(query_input)
+    terms = query_input.split(' ')
 
+    query_frequencies = {}
+    for term in terms:
+        if term not in query_frequencies:
+            query_frequencies[term] = 1
+        else:
+            query_frequencies[term] += 1
+
+    
 
 if __name__ == "__main__":
-    # TODO: score com coseno
+   
 
     inverted_index = {}
     bw = {}
