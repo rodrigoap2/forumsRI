@@ -1,21 +1,7 @@
 import pickle
 import numpy as np
 import sys
-from query_utils import preprocess_phrase, qt_docs, kendall_tau
-
-
-def tfidf(inverted_index: dict, N: int):
-    tfidf_table = {}
-    for k, v in inverted_index.items():
-        idf = np.log2(N / v[0])
-        term_dict = {}
-        for docs in v[1]:
-            # docs[1] = docs[1] * idf
-            term_dict[docs[0]] = docs[1] * idf
-        
-        tfidf_table[k] = term_dict
-
-    return tfidf_table
+from query_utils import preprocess_phrase, qt_docs, kendall_tau, tfidf, get_document_tfidf
 
 
 def query_tf(query_input: str, inverted_index: dict):
@@ -36,30 +22,19 @@ def query_tf(query_input: str, inverted_index: dict):
                             for item in sorted(scores.items(), key=lambda x: -x[1])}
 
     return scores
-    
 
-def cosine(query_terms: str, tfidf_terms, document_tfidf, N: int, inverted_index: dict):
+
+def cosine(query_terms: [str], tfidf_terms, document_tfidf, N: int, inverted_index: dict):
     idfs = []
     for term in query_terms:
         if term in inverted_index:
             idfs.append(np.log2(N / inverted_index[term][0]))
-    
+
     return sum(q * d for q in idfs for d in tfidf_terms) / np.linalg.norm(document_tfidf)
-
-
-def get_document_tfidf(doc, table_score):
-    ans = []
-
-    for term, scores in table_score.items():
-        if doc in scores:
-            ans.append(scores[doc])
-
-    return ans
 
 def query_cosine(query_input: str, table_score: dict, N: int, inverted_index: dict):
     query_input = preprocess_phrase(query_input)
     terms = query_input.split(' ')
-
 
     scores = {}
     for term in terms:
@@ -70,7 +45,8 @@ def query_cosine(query_input: str, table_score: dict, N: int, inverted_index: di
                 else:
                     scores[doc].append(score)
     
-    
+    # print(scores)
+    # input()
     for doc, tfidf_terms in scores.items():
         document_tfidf = get_document_tfidf(doc, table_score)
         
