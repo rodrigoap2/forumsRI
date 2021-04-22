@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 import sys
-from query_utils import preprocess_phrase, qt_docs
+from query_utils import preprocess_phrase, qt_docs, kendall_tau
 
 
 def tfidf(inverted_index: dict, N: int):
@@ -60,29 +60,7 @@ def query_cosine(query_input: str, table_score: dict):
     
     return scores
     
-def ordered_pairs(result: list):
-    ans = []
 
-    for i in range(len(result)):
-        for j in range(i + 1, len(result)):
-            ans.append([result[i], result[j]])
-
-    return ans
-
-def kendall_tau(results_1, results_2):
-    results_1 = list(results_1)
-    results_2 = list(results_2)
-    pairs_1 = ordered_pairs(results_1)
-    pairs_2 = ordered_pairs(results_2)
-
-    n = len(pairs_1)
-    delta = 0
-    for i in range(len(pairs_1)):
-        if pairs_1[i] not in pairs_2:
-            delta += 1
-    
-    delta *= 2
-    return 1 - 2 * delta / (2 * n)
 
 # R e r são 0 na formula
 def bm25(query_input: str):
