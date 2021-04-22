@@ -30,7 +30,14 @@ def kendall_tau(results_1, results_2):
     pairs_1 = ordered_pairs(results_1)
     pairs_2 = ordered_pairs(results_2)
 
+    if not len(results_1) or not len(results_2):
+        return 0
+
+    if len(results_1) == 1 or len(results_2) == 1:
+        return 1 if results_1[0] == results_2[0] else 0
+
     n = len(pairs_1)
+
     delta = 0
     for i in range(len(pairs_1)):
         if pairs_1[i] not in pairs_2:
