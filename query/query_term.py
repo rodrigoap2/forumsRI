@@ -2,7 +2,7 @@ import pickle
 from query_utils import preprocess_phrase, qt_docs, tfidf, get_document_tfidf, get_document_size, kendall_tau
 import numpy as np
 
-fields_strings = ['title', 'date', 'question.author',
+fields_strings = ['question.title', 'date', 'question.author',
                   'question.text', 'answers.author', 'answers.text']
 
 
@@ -63,22 +63,16 @@ def query_cosine_aux(terms: [str], field: str, inverted_index_fields: dict, tabl
                     scores[doc] = [score]
                 else:
                     scores[doc].append(score)
-    
-    
 
     for doc, tfidf_terms in scores.items():
         document_tfidf = get_document_tfidf(doc, table_score)
 
         scores[doc] = cosine(terms, field, tfidf_terms,
                              document_tfidf, N, inverted_index_fields)
-
-
-    return scores
-
-
         
 
-def query_cosine(title: str = '', date: str = '', question_author: str = '', question_text: str = '', answers_author: str = '', answers_text: str = '', inverted_index_fields: dict = {}, table_score: dict = {}, N: int = 0):
+def query_cosine(title: str = '', date: str = '', question_author: str = '', question_text: str = '', answers_author: str = '', 
+        answers_text: str = '', inverted_index_fields: dict = {}, table_score: dict = {}, N: int = 0):
     title = preprocess_phrase(title)
     date = preprocess_phrase(date)
     question_author = preprocess_phrase(question_author)
