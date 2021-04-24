@@ -71,12 +71,7 @@ def bm25(query_input: str, items_count: dict, inverted_index: dict, N: int):
 
     scores = {}
 
-    query_frequencies = {}
-    for term in terms:
-        if term not in query_frequencies:
-            query_frequencies[term] = 1
-        else:
-            query_frequencies[term] += 1
+    query_frequencies = {term: terms.count(term) for term in terms}
 
     for term in terms:
         if term in inverted_index:
