@@ -35,9 +35,9 @@ def extractor(link, index):
         result = soup.findAll('div',  {"class": ["lia-message-view-forum-message"]})
     else: 
         result = soup.findAll('article')
-    file_path = './document/document' + str(index) + '.txt'
+    file_path = './documentsNew/document' + str(index) + '.txt'
     f = open(file_path, 'wb')
-    post_description = {'title':'', 'date': '', 'question': {'author': '', 'text': ''}, 'answers': []}
+    post_description = {'date': '', 'question': {'author': '', 'text': '', 'title':''}, 'answers': []}
     posts = 0
     for article in result:
         text = ''
@@ -60,8 +60,8 @@ def extractor(link, index):
                             if not current_line.isnumeric() and not validate_date(current_line):
                                 post_description['question']['author'] = current_line
                         elif post_description['question']['author'] != '' and post_description['date'] != '':
-                            if post_description['title'] == '':
-                                post_description['title'] = current_line
+                            if post_description['question']['title'] == '':
+                                post_description['question']['title'] = current_line
                             post_description['question']['text'] += current_line + '\n'
                 else:
                     post_description['answers'].append({'date': '', 'author': '', 'text': ''})
@@ -111,7 +111,7 @@ def validate_date(text):
 if __name__ == "__main__":
     f = open("linkshopify.txt", "r")
     links = f.read().split('\n')
-    link_counter = 0
+    link_counter = 30
     for link in links:
         extractor(link, link_counter)
         print(link, 'terminou esse link')

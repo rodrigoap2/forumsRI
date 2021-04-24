@@ -3,6 +3,7 @@ import pickle
 from unidecode import unidecode
 from nltk import tokenize
 from struct import pack, unpack
+import re
 
 tokenized_elements = []
 tokenized_elements_fields = []
@@ -18,7 +19,7 @@ def preprocess_document(document, document_id):
     tokenize_document(ascii_folded_document, document_id)
 
 def decode(text):
-    return unidecode(''.join(c for c in text.lower() if c.isalnum() or c == ' ' or '\n'))
+    return re.sub('[^A-Za-z0-9 ]+', '', unidecode(text)).lower()
 
 def ascii_fold_document(document):
     for key in document:
@@ -40,7 +41,7 @@ def tokenize_document(document, document_id):
     bag_of_words[document_name] = set()
     items_count[document_name] = 0
     for key in document:
-        if key == 'title' or key == 'date':
+        if key == 'date':
             tokens = tokenize_text(document[key])
             for element in tokens:
                 tokenized_elements_fields.append((element + '.' + key, document_id))
@@ -137,7 +138,7 @@ if __name__ == "__main__":
     document_id = 0
     bag_of_words = {}
     items_count = {}
-    for idx in range(0, 10):
+    for idx in range(0, 40):
         document = {}
         with open('../extractor/documents/document' + str(idx) + '.txt', 'rb') as file:
             document = pickle.load(file)
@@ -164,5 +165,5 @@ if __name__ == "__main__":
     #print(inv_index_fields)
     #print(bag_of_words)
     #print(inv_index_comp)
-    #print(inv_index_fields_comp)
+    print(inv_index_fields_comp)
     #print(items_count)
