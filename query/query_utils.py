@@ -1,6 +1,7 @@
 from unidecode import unidecode
 import re
 import numpy as np
+import pickle
 
 def preprocess_phrase(phrase: str):
     return re.sub('[^A-Za-z0-9 ]+', '', unidecode(phrase)).lower()
@@ -80,5 +81,21 @@ def get_document_size(doc, table_score) -> int:
 
     return ans
 
+
+def print_query(query: dict):
+    for idx in query:
+        # print(question)
+        document = {}
+        with open('../extractor/documents/document' + str(idx) + '.txt', 'rb') as file:
+            document = pickle.load(file)
+            file.close()
+        # print(document)
+        print("=" * 20)
+        print(document['question']['title'])
+        print(document['question']['text'])
+        print(document['question']['author'])
+        print(document['date'])
+        print("=" * 20)
+        print()
 
 

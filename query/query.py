@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 import sys
-from query_utils import preprocess_phrase, qt_docs, kendall_tau, tfidf, get_document_tfidf
+from query_utils import preprocess_phrase, qt_docs, kendall_tau, tfidf, get_document_tfidf, print_query
 
 
 def query_tf(query_input: str, inverted_index: dict):
@@ -19,7 +19,7 @@ def query_tf(query_input: str, inverted_index: dict):
                     scores[doc] += tf
 
     scores = {item[0]: item[1]
-                            for item in sorted(scores.items(), key=lambda x: -x[1])}
+              for item in sorted(scores.items(), key=lambda x: -x[1])}
 
     return scores
 
@@ -31,6 +31,7 @@ def cosine(query_terms: [str], tfidf_terms, document_tfidf, N: int, inverted_ind
             idfs.append(np.log2(N / inverted_index[term][0]))
 
     return sum(q * d for q in idfs for d in tfidf_terms) / np.linalg.norm(document_tfidf)
+
 
 def query_cosine(query_input: str, table_score: dict, N: int, inverted_index: dict):
     query_input = preprocess_phrase(query_input)
@@ -44,17 +45,17 @@ def query_cosine(query_input: str, table_score: dict, N: int, inverted_index: di
                     scores[doc] = [score]
                 else:
                     scores[doc].append(score)
-    
+
     for doc, tfidf_terms in scores.items():
         document_tfidf = get_document_tfidf(doc, table_score)
-        
-        scores[doc] = cosine(terms, tfidf_terms, document_tfidf, N, inverted_index)
+
+        scores[doc] = cosine(terms, tfidf_terms,
+                             document_tfidf, N, inverted_index)
 
     scores = {item[0]: item[1]
-                            for item in sorted(scores.items(), key=lambda x: -x[1])}
-    
+              for item in sorted(scores.items(), key=lambda x: -x[1])}
+
     return scores
-    
 
 
 # R e r são 0 na formula
@@ -79,11 +80,13 @@ def bm25(query_input: str, items_count: dict, inverted_index: dict, N: int):
             for doc, tf in frequencies:
                 # print(f"doc: {doc}  tf: {tf}  Freq: {frequencies}")
                 # input()
-                p1 = np.log2((N - len(frequencies) + 0.5) / (len(frequencies) + 0.5))
-                K = k1 * ((1 - b) + b * items_count['document' + str(doc)] / avdl)
+                p1 = np.log2((N - len(frequencies) + 0.5) /
+                             (len(frequencies) + 0.5))
+                K = k1 * ((1 - b) + b *
+                          items_count['document' + str(doc)] / avdl)
                 p2 = ((k1 + 1) * tf) / (K + tf)
-                p3 = ((k2 + 1) * query_frequencies[term]) / (k2 + query_frequencies[term])
-
+                p3 = (
+                    (k2 + 1) * query_frequencies[term]) / (k2 + query_frequencies[term])
 
                 # print(f'term: {term}  doc: {doc}')
                 # print(f'p1: {p1}  p2: {p2}  p3: {p3}')
@@ -99,14 +102,8 @@ def bm25(query_input: str, items_count: dict, inverted_index: dict, N: int):
 
     return scores
 
-    
-
-def kendal_tau(results_1, results_2):
-    pass
-
 
 if __name__ == "__main__":
-   
 
     inverted_index = {}
     bw = {}
@@ -130,14 +127,11 @@ if __name__ == "__main__":
     q2 = query_cosine(arg, tfidf_table, N, inverted_index)
     q3 = bm25(arg, items_count, inverted_index, N)
 
-    print(f"Default: {q1}")
-    print(f"Cosine: {q2}")
-    print(f"BM25: {q3}")
+    # print(f"Default: {q1}")
+    # print(f"Cosine: {q2}")
+    # print(f"BM25: {q3}")
 
-    kt = kendall_tau(q1, q2)
-    print(kt)
-    
+    # kt = kendall_tau(q1, q2)
+    # print(kt)
 
-
-
-
+    print_query(q2)
