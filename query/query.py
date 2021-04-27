@@ -121,11 +121,30 @@ if __name__ == "__main__":
 
     tfidf_table = tfidf(inverted_index, N)
 
-    arg = sys.argv[1]
+    # arg = sys.argv[1]
     # 'Perdi minha situação do serviço, o que fazer???'
-    q1 = query_tf(arg, inverted_index)
-    q2 = query_cosine(arg, tfidf_table, N, inverted_index)
-    q3 = bm25(arg, items_count, inverted_index, N)
+
+    queries = ["Estou com error na minha loja, como proceder?",
+        "Como fazer conversão para Facebook",
+        "Como usar Apple pay na minha loja",
+        "Como verificar meu pix",
+        "Perdi minha situação do serviço, o que fazer?"
+    ]
+
+
+    for arg in queries:
+        print(arg)
+        q1 = query_tf(arg, inverted_index)
+        q2 = query_cosine(arg, tfidf_table, N, inverted_index)
+        q3 = bm25(arg, items_count, inverted_index, N)
+
+        print(f"Básica x Coseno: {kendall_tau(q1, q2)}")
+        print(f"Básica x BM25: {kendall_tau(q1, q3)}")
+        print(f"Coseno x BM25: {kendall_tau(q2, q3)}")
+        print()
+
+
+
 
     # print(f"Default: {q1}")
     # print(f"Cosine: {q2}")
@@ -134,4 +153,4 @@ if __name__ == "__main__":
     # kt = kendall_tau(q1, q2)
     # print(kt)
 
-    print_query(q2)
+    # print_query(q2)

@@ -18,7 +18,7 @@ def query_tf_aux(terms: [str], field: str, inverted_index_fields: dict, scores: 
                     scores[doc] += tf
 
 
-def query_tf(title: str = '', date: str = '', question_author: str = '', question_text: str = '', answers_author: str = '', answers_text: str = '', inverted_index_fields: dict = {}):
+def query_tf_term(title: str = '', date: str = '', question_author: str = '', question_text: str = '', answers_author: str = '', answers_text: str = '', inverted_index_fields: dict = {}):
     title = preprocess_phrase(title)
     date = preprocess_phrase(date)
     question_author = preprocess_phrase(question_author)
@@ -71,7 +71,7 @@ def query_cosine_aux(terms: [str], field: str, inverted_index_fields: dict, tabl
                              document_tfidf, N, inverted_index_fields)
         
 
-def query_cosine(title: str = '', date: str = '', question_author: str = '', question_text: str = '', answers_author: str = '', 
+def query_cosine_term(title: str = '', date: str = '', question_author: str = '', question_text: str = '', answers_author: str = '', 
         answers_text: str = '', inverted_index_fields: dict = {}, table_score: dict = {}, N: int = 0):
     title = preprocess_phrase(title)
     date = preprocess_phrase(date)
@@ -130,15 +130,32 @@ if __name__ == "__main__":
     # - answers.text
     # print(inverted_index_fields)
 
-    q1 = query_cosine(answers_author='nathan',
-                      inverted_index_fields=inverted_index_fields, table_score=tfidf_table, N=N)
+    queries = ["Estou com error na minha loja, como proceder?",
+               "Como fazer conversão para Facebook",
+               "Como usar Apple pay na minha loja",
+               "Como verificar meu pix",
+               "Perdi minha situação do serviço, o que fazer?"
+               ]
+
+    for arg in queries:
+        q1 = query_tf_term(question_text=arg,
+                        inverted_index_fields=inverted_index_fields)
+        
+        q2 = query_cosine_term(question_text=arg,
+                                inverted_index_fields=inverted_index_fields, table_score=tfidf_table, N=N)
+        
+        print(f"Básica x Coseno: {kendall_tau(q1, q2)}")
+        print()
+
+    # q1 = query_cosine(answers_author='nathan',
+    #                   inverted_index_fields=inverted_index_fields, table_score=tfidf_table, N=N)
     
-    q2 = query_tf(answers_author='nathan',
-                  inverted_index_fields=inverted_index_fields)
+    # q2 = query_tf(answers_author='nathan',
+    #               inverted_index_fields=inverted_index_fields)
 
-    print(q1)
-    print(q2)
+    # print(q1)
+    # print(q2)
 
-    kt = kendall_tau(q1, q2)
-    print(kt)
+    # kt = kendall_tau(q1, q2)
+    # print(kt)
 
